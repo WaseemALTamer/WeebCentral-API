@@ -13,6 +13,8 @@ SEARCHSIMPLE = "search/simple"
 SERIESPATH = "series/"
 SITEMAPS = "sitemap.xml"
 
+SERIESCHAPTERPATH = "/full-chapter-list"
+
 # Cover image domain and paths
 COVERIMAGEDOMAIN = "https://temp.compsci88.com/"
 COVERPATH = "cover/"

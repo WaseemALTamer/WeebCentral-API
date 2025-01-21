@@ -17,9 +17,11 @@ class Series:
 class Chapter:
     def __init__(self):
         self.ChapterID:int = None
-        self.ChapterNumber:float = None
+        self.ChapterNumber:float|int = None
         self.SeasonTag:str = None
         self.Season:int = None
         self.Link:str = None
         self.PagesNumber:int = None
         self.FirstPageLink:str = None
+        self.FirstPageQickLink:str = None
+        self.Date:str = None
