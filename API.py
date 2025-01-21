@@ -13,8 +13,8 @@
 
 
 
-from .Structure import Chapter , Series
-from . import Cypher, Constants
+from Structure import Chapter , Series
+import Cypher, Constants
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import requests
