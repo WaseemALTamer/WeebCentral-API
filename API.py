@@ -11,10 +11,14 @@
 
 
 
+try: # this is incase you where running it as a package
+    from .Structure import Chapter , Series
+    from . import Cypher, Constants, DummyHeaders
+except: # this is incase you where running it as a mudole same folder
+    from Structure import Chapter , Series
+    import Cypher, Constants, DummyHeaders
 
 
-from Structure import Chapter , Series
-import Cypher, Constants
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import requests
@@ -22,8 +26,6 @@ import time
 import json
 import os
 import re
-
-
 
 # this will grap the names and  the id that comes with the name of the manga
 # it will also let you search through them using a function and show you the
@@ -67,7 +69,7 @@ class NamesIDGraper:
 
         _SeriesData = []
         try:
-            response = requests.post(_url, params=_params, data=_data)
+            response = requests.post(_url, params=_params, data=_data, headers=DummyHeaders.Header_1)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, "html.parser")
                 a_tags = soup.find_all('a')
@@ -92,7 +94,7 @@ class NamesIDGraper:
         _pattern = Cypher.XML_URL_PATTERN
         _SeriesData = []
         try:
-            response = requests.get(_url)
+            response = requests.get(_url, headers=DummyHeaders.Header_1)
             if response.status_code == 200:
                 _seriesUrls = re.findall(_pattern, response.text)
                 for _seriesUrl in _seriesUrls:
@@ -190,9 +192,8 @@ class NamesIDGraper:
     def _SaveData(self):
         self.ConvertSeriesToDict()
         file_path = "JsonFiles/SeriesNamesToID.json"
-        directory = os.path.dirname(file_path)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if not os.path.exists("JsonFiles"):
+            os.makedirs("JsonFiles")
         with open(file_path, "w") as json_file:
             json.dump(self.SeriesDataDict, json_file, indent=4)
         
@@ -216,19 +217,19 @@ class SeriesDataGraper:
     def GrapSeriesInfo(self):
         _url = Constants.WEBDOMAIN + Constants.SERIESPATH + self.Series.DomainID # this methode is more effiecent than the full list method
         try:
-            response = requests.get(_url)
+            response = requests.get(_url, headers=DummyHeaders.Header_2)
         except Exception as e:
             print(f"Error: {e} -> Function: GrapSeriesInfo -> try request again or Domain is down or Domain changed")
         if response.status_code == 200:
             self._extractReleventData(response.text)
         else:
-            print(f"Error: status code = {response.status_code} -> Function : GrapChaptersInfo -> Domain Error webpage down or Domain changed")
+            print(f"Error: status code = {response.status_code} -> Function : GrapSeriesInfo -> Domain Error webpage down or Domain changed")
 
 
     def GrapChaptersInfo(self) -> None:
         _url = Constants.WEBDOMAIN + Constants.SERIESPATH + self.Series.DomainID + Constants.SERIESCHAPTERPATH
         try:
-            response = requests.get(_url)
+            response = requests.get(_url, headers=DummyHeaders.Header_1)
         except Exception as e:
             print(f"Error: {e} -> Function: GrapChaptersInfo -> try request again or consider changing the filler of the request")
         
@@ -242,27 +243,27 @@ class SeriesDataGraper:
         _url = Constants.WEBDOMAIN + Constants.SERIESPATH + self.Series.DomainID + self.filler_1 # this methode is more effiecent than the full list method
                                                                                                  # but it does not grap the dates of relase
         try:
-            response = requests.get(_url)
+            response = requests.get(_url, headers=DummyHeaders.Header_2)
         except Exception as e:
-            print(f"Error: {e} -> Function: GrapChaptersInfo -> try request again or consider changing the filler of the request")
+            print(f"Error: {e} -> Function: LegacyGrapChaptersInfo -> try request again or consider changing the filler of the request")
         
         if response.status_code == 200:
             self._legacyExtractChaptersContent(response.text)
         else:
-            print(f"Error: status code = {response.status_code} -> Function : GrapChaptersInfo -> Domain Error webpage down or Domain changed")
+            print(f"Error: status code = {response.status_code} -> Function : LegacyGrapChaptersInfo -> Domain Error webpage down or Domain changed")
 
 
     def GrapSeriesCover(self) -> None: # this will grab the cover image of the show
         _url = Constants.COVERIMAGEDOMAIN + Constants.COVERPATH + Constants.COVERIMAGENORMALPATH + self.Series.DomainID + Constants.COVERIMAGEEXTENTION
         try:
-            response = requests.get(_url)
+            response = requests.get(_url, headers=DummyHeaders.Header_1)
         except Exception as e:
             print(f"Error: {e} -> Function: GrapSeriesCover -> try request again or Domain is down or Domain changed")
         
         if response.status_code == 200:
             self.Series.CoverImage = response.content
         else:
-            print(f"Error: status code = {response.status_code} -> Function : GrapChaptersInfo -> Domain Error webpage down or Domain changed")
+            print(f"Error: status code = {response.status_code} -> Function : GrapSeriesCover -> Domain Error webpage down or Domain changed")
 
 
 
@@ -296,19 +297,17 @@ class SeriesDataGraper:
 
     def _extractChaptersContent(self, html_text:str):
         soup = BeautifulSoup(html_text, "html.parser")
-        a_tags = soup.find_all('a',attrs={"x-data": True, 
-                                  "class": True,
-                                  "href": True})
+        div_tags = soup.find_all('div',{"x-data": True,  "x-show": True,"class": True}) # if this break again this may be the problem
         _seasonDict = {
             
         }
 
         _chapters = []
 
-        for _tag in a_tags[::-1]:
-            _header = _tag.find_all('span', class_="")[0].text 
-            _link = _tag["href"]
-            _time = _tag.time["datetime"]
+        for _tag in div_tags[::-1]:
+            _header = _tag.find('span', class_="").text # if this break again this may be the problem
+            _link = _tag.find('a', {"href": True, "class": True})["href"] # if this break again this may be the problem
+            _time = _tag.time["datetime"] # if this break again this may be the problem
             
             _data = _header.split(" ")
             _chapter = _data[-1]
@@ -402,7 +401,7 @@ class ChaptersDataGraper:
         self.RequestError = False
 
         try:
-            response = requests.get(_url)
+            response = requests.get(_url, headers=DummyHeaders.Header_1)
         except Exception as e:
             print(f"Error: {e} -> Function: GrapChapterInfromation -> try request again or Domain is down or Domain changed")
             self.RequestError = True
